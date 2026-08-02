@@ -786,8 +786,15 @@ code {
   display: inline;
 }
 
-.about-strip .btn {
+.about-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   flex: 0 0 auto;
+  align-items: center;
+}
+
+.about-strip-actions .btn {
   white-space: nowrap;
 }
 
@@ -979,11 +986,33 @@ code {
 
 .help-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 16px;
   border-top: 1px solid var(--line);
   flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+
+.help-footer-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.help-footer-hint strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.help-footer-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 kbd {
@@ -1073,5 +1102,14 @@ kbd {
   .about-strip {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .about-strip-actions {
+    justify-content: flex-end;
+  }
+
+  .help-footer-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

@@ -11,6 +11,7 @@ import {
 } from "./engine.js";
 import { createPlotter } from "./plotter.js";
 import { KEYPAD, EXAMPLES } from "./keypad.js";
+import { GUIDE_MARKDOWN } from "./guide-export.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -773,8 +774,34 @@ function initEvents() {
     });
   }
 
+  async function copyGuideForAi() {
+    const text = GUIDE_MARKDOWN;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // file:// or older browsers
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      toast("Guide copied as Markdown — paste into your AI agent");
+    } catch (err) {
+      toast("Could not copy to clipboard", true);
+      console.error(err);
+    }
+  }
+
   $("help-btn").addEventListener("click", () => openGuide("overview"));
   $("about-open-guide")?.addEventListener("click", () => openGuide("overview"));
+  $("about-copy-ai")?.addEventListener("click", () => copyGuideForAi());
+  $("help-copy-ai")?.addEventListener("click", () => copyGuideForAi());
   $("help-close")?.addEventListener("click", () => el.helpDialog.close());
   $("help-close-footer")?.addEventListener("click", () => el.helpDialog.close());
 

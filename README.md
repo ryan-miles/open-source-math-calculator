@@ -81,6 +81,9 @@ as you type. History, variables, memory and settings are saved in the browser.
   the numeric result.
 - Open the **Graph** panel, enter an expression in `x`, and hit **Plot**.
 - Switch **DEG** / **RAD** in the top bar for trig functions.
+- **Guide** (top bar) explains capabilities, limits, and how the app is built.
+  **Copy for AI** (on the page strip or inside Guide) copies that whole guide
+  as Markdown so you can paste it into an agent or chat.
 
 ## Layout
 
@@ -90,6 +93,7 @@ src/main.js         app wiring: evaluate loop, history, keypad, graph
 src/engine.js       expression normalize + math.js evaluation + formatting
 src/plotter.js      canvas function plotter
 src/keypad.js       keypad layouts and example gallery
+src/guide-export.js full Guide as Markdown (“Copy for AI”)
 src/style.css       styles
 vite.config.js      dual build (offline single-file + web)
 ```

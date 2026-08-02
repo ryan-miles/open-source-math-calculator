@@ -135,9 +135,14 @@
             <strong>Runs entirely in your browser</strong>
             — expressions, scientific math, units, variables, history, and
             graphing. No server, no account, nothing is uploaded.
-            <span class="dim">Open Guide for full capabilities, limits, and how it works.</span>
+            <span class="dim">Open Guide for full capabilities, limits, and how it works. Copy for AI pastes the same guide as Markdown.</span>
           </div>
-          <button type="button" class="btn tiny" id="about-open-guide">Open Guide</button>
+          <div class="about-strip-actions">
+            <button type="button" class="btn tiny ghost" id="about-copy-ai" title="Copy the full guide as Markdown for pasting into an AI agent">
+              Copy for AI
+            </button>
+            <button type="button" class="btn tiny" id="about-open-guide">Open Guide</button>
+          </div>
         </footer>
       </section>
 
@@ -479,7 +484,20 @@
         </div>
 
         <footer class="help-footer">
-          <button type="button" class="btn" id="help-close-footer">Close</button>
+          <p class="help-footer-hint dim">
+            Need this for an agent? <strong>Copy for AI</strong> puts the full guide on the clipboard as Markdown.
+          </p>
+          <div class="help-footer-actions">
+            <button
+              type="button"
+              class="btn primary"
+              id="help-copy-ai"
+              title="Copy the full guide as Markdown for pasting into ChatGPT, Claude, Cursor, etc."
+            >
+              Copy for AI
+            </button>
+            <button type="button" class="btn" id="help-close-footer">Close</button>
+          </div>
         </footer>
       </div>
     </dialog>
