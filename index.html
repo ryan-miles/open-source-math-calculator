@@ -59,7 +59,9 @@
 
       <div class="topbar-group right">
         <button id="plot-toggle" class="btn ghost" title="Show / hide function graph">Graph</button>
-        <button id="help-btn" class="btn ghost" title="Keyboard shortcuts & tips">Help</button>
+        <button id="help-btn" class="btn ghost" title="What this calculator can do, limits, and how it works">
+          Guide
+        </button>
         <button id="ui-theme-btn" class="btn ghost icon" title="Toggle light / dark interface">◐</button>
       </div>
     </header>
@@ -127,6 +129,16 @@
           <span class="mem-indicator" id="mem-indicator" hidden>M</span>
           <span class="dim mem-value" id="mem-value"></span>
         </div>
+
+        <footer class="about-strip" id="about-strip">
+          <div class="about-strip-text">
+            <strong>Runs entirely in your browser</strong>
+            — expressions, scientific math, units, variables, history, and
+            graphing. No server, no account, nothing is uploaded.
+            <span class="dim">Open Guide for full capabilities, limits, and how it works.</span>
+          </div>
+          <button type="button" class="btn tiny" id="about-open-guide">Open Guide</button>
+        </footer>
       </section>
 
       <!-- Right: graph panel -->
@@ -164,43 +176,312 @@
     <div class="toast" id="toast" hidden></div>
 
     <dialog id="help-dialog" class="help-dialog">
-      <form method="dialog" class="help-inner">
+      <div class="help-inner">
         <header>
-          <h2>Help & shortcuts</h2>
-          <button type="submit" class="btn ghost icon" aria-label="Close">✕</button>
+          <div>
+            <h2>Calculator guide</h2>
+            <p class="help-sub">What you can do, what you can’t, and how this tool works.</p>
+          </div>
+          <button type="button" class="btn ghost icon" id="help-close" aria-label="Close">✕</button>
         </header>
-        <div class="help-body">
-          <section>
-            <h3>Keyboard</h3>
-            <table class="help-table">
-              <tr><td><kbd>Enter</kbd></td><td>Evaluate</td></tr>
-              <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Evaluate (keep focus)</td></tr>
-              <tr><td><kbd>Esc</kbd></td><td>Clear expression</td></tr>
-              <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Browse history in the expression box</td></tr>
-              <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Focus expression</td></tr>
-              <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Toggle graph panel</td></tr>
-            </table>
-          </section>
-          <section>
-            <h3>Expressions</h3>
-            <ul>
-              <li>Natural math: <code>2π</code>, <code>3(4+5)</code>, <code>sqrt(2)^2</code></li>
-              <li>Assignments: <code>r = 5</code>, then <code>pi * r^2</code></li>
-              <li>Functions: <code>f(x) = x^2 + 1</code>, then <code>f(3)</code></li>
-              <li>Last answer: <code>ans</code> (or click a history row)</li>
-              <li>Units: <code>5 ft to m</code>, <code>72 degF to degC</code>, <code>100 km/h in mph</code></li>
-              <li>Combinatorics: <code>nCr(52, 5)</code>, <code>factorial(10)</code></li>
-            </ul>
-          </section>
-          <section>
-            <h3>Privacy</h3>
-            <p>
-              Everything runs in your browser. History and settings stay in
-              <code>localStorage</code> on this device — nothing is uploaded.
-            </p>
-          </section>
+
+        <div class="help-layout">
+          <nav class="help-nav" aria-label="Guide sections">
+            <button type="button" class="help-nav-btn active" data-help-sec="overview">Overview</button>
+            <button type="button" class="help-nav-btn" data-help-sec="can">What you can do</button>
+            <button type="button" class="help-nav-btn" data-help-sec="syntax">Syntax &amp; examples</button>
+            <button type="button" class="help-nav-btn" data-help-sec="cant">Limits &amp; can’ts</button>
+            <button type="button" class="help-nav-btn" data-help-sec="ui">Using the UI</button>
+            <button type="button" class="help-nav-btn" data-help-sec="keys">Keyboard</button>
+            <button type="button" class="help-nav-btn" data-help-sec="impl">How it’s built</button>
+          </nav>
+
+          <div class="help-body" id="help-body">
+            <section id="help-overview" class="help-sec" data-help-panel="overview">
+              <h3>What this is</h3>
+              <p>
+                An <strong>advanced expression calculator</strong> that runs 100% in your
+                browser. Type math the way you’d write it, press <kbd>Enter</kbd> (or
+                <strong>=</strong>), and get a result. History, variables, memory, unit
+                conversion, and a simple function graph are included.
+              </p>
+              <p>
+                It is <strong>not</strong> a full computer-algebra system (CAS), a
+                spreadsheet, or a symbolic equation solver. It evaluates numeric
+                expressions (and math.js units) quickly and privately on your device.
+              </p>
+              <div class="help-callout">
+                <strong>Privacy:</strong> nothing is uploaded. Your expression, history,
+                variables, memory, and settings stay in this browser’s
+                <code>localStorage</code> only.
+              </div>
+            </section>
+
+            <section id="help-can" class="help-sec" data-help-panel="can" hidden>
+              <h3>What you can do</h3>
+              <table class="help-table wide">
+                <thead>
+                  <tr><th>Area</th><th>You can…</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Arithmetic</td>
+                    <td>Add, subtract, multiply, divide, powers, roots, percent, absolute value, rounding</td>
+                  </tr>
+                  <tr>
+                    <td>Trig &amp; hyperbolic</td>
+                    <td><code>sin</code> <code>cos</code> <code>tan</code> and inverses; <code>sinh</code> <code>cosh</code> <code>tanh</code>; angle mode <strong>DEG</strong> or <strong>RAD</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Logs &amp; exp</td>
+                    <td><code>ln</code>, <code>log</code> (base 10), <code>log2</code>, <code>exp</code>, <code>10^(…)</code></td>
+                  </tr>
+                  <tr>
+                    <td>Combinatorics</td>
+                    <td><code>factorial(n)</code> for integers 0…170; <code>nCr(n, r)</code>; <code>nPr(n, r)</code></td>
+                  </tr>
+                  <tr>
+                    <td>Stats helpers</td>
+                    <td><code>min</code> <code>max</code> <code>mean</code> <code>sum</code> <code>hypot</code> <code>gcd</code> <code>lcm</code></td>
+                  </tr>
+                  <tr>
+                    <td>Constants</td>
+                    <td><code>pi</code> / <code>π</code>, <code>e</code>, <code>tau</code> / <code>τ</code>, <code>phi</code></td>
+                  </tr>
+                  <tr>
+                    <td>Variables</td>
+                    <td>Assign with <code>name = expression</code>; reuse later; clear from the Variables panel</td>
+                  </tr>
+                  <tr>
+                    <td>User functions</td>
+                    <td>Define <code>f(x) = …</code> or <code>g(x, y) = …</code>, then call them</td>
+                  </tr>
+                  <tr>
+                    <td>Last answer</td>
+                    <td>Use <code>ans</code> in the next expression; or click a history row</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>MC / MR / M+ / M− / MS on the current value (or <code>ans</code>)</td>
+                  </tr>
+                  <tr>
+                    <td>Units</td>
+                    <td>Convert with <code>to</code> / <code>in</code>, e.g. <code>5 ft to m</code>, <code>72 degF to degC</code>, <code>100 km/h to mph</code></td>
+                  </tr>
+                  <tr>
+                    <td>Display formats</td>
+                    <td>Auto, fixed, scientific, engineering, or fraction-style approximation</td>
+                  </tr>
+                  <tr>
+                    <td>Graphing</td>
+                    <td>Open <strong>Graph</strong> and plot <code>y = f(x)</code> over an x-range (sampled curve, not symbolic)</td>
+                  </tr>
+                  <tr>
+                    <td>Persistence</td>
+                    <td>History, variables, functions, memory, theme, and settings survive closing the tab (same browser/profile)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section id="help-syntax" class="help-sec" data-help-panel="syntax" hidden>
+              <h3>Syntax &amp; examples</h3>
+              <p>Type in the big expression box. Implicit multiplication is supported where it is unambiguous.</p>
+              <table class="help-table wide">
+                <thead>
+                  <tr><th>Idea</th><th>Example</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Basic ops</td><td><code>2 + 3 * 4</code>, <code>(1+2)^3</code>, <code>10 ÷ 4</code></td></tr>
+                  <tr><td>Implicit multiply</td><td><code>2pi</code>, <code>3(4+5)</code>, <code>2√(9)</code></td></tr>
+                  <tr><td>Powers / roots</td><td><code>2^10</code>, <code>sqrt(2)</code>, <code>cbrt(27)</code>, <code>x²</code></td></tr>
+                  <tr><td>Trig (degrees)</td><td>Set <strong>DEG</strong>, then <code>sin(30)</code> → 0.5</td></tr>
+                  <tr><td>Trig (radians)</td><td>Set <strong>RAD</strong>, then <code>sin(pi/2)</code> → 1</td></tr>
+                  <tr><td>Assign variable</td><td><code>r = 5</code> then <code>pi * r^2</code></td></tr>
+                  <tr><td>Define function</td><td><code>f(x) = x^2 * sin(x)</code> then <code>f(pi/2)</code></td></tr>
+                  <tr><td>Chain with ans</td><td>Evaluate something, then <code>ans * 2</code></td></tr>
+                  <tr><td>Percent</td><td><code>50%</code> → 0.5; useful in <code>200 * 15%</code></td></tr>
+                  <tr><td>Combinations</td><td><code>nCr(52, 5)</code>, <code>factorial(10)</code></td></tr>
+                  <tr><td>Length units</td><td><code>5 ft to m</code>, <code>1 mile to km</code></td></tr>
+                  <tr><td>Temperature</td><td><code>72 degF to degC</code> (use <code>degC</code> / <code>degF</code>)</td></tr>
+                  <tr><td>Speed</td><td><code>100 km/h to mph</code> (<code>mph</code>, <code>kph</code> aliases included)</td></tr>
+                  <tr><td>Random</td><td><code>rand()</code> in 0…1; <code>randi(1, 6)</code> integer in range</td></tr>
+                </tbody>
+              </table>
+              <p class="help-note">
+                The <strong>Examples</strong> menu in the top bar loads ready-made expressions
+                (and any setup variables they need).
+              </p>
+            </section>
+
+            <section id="help-cant" class="help-sec" data-help-panel="cant" hidden>
+              <h3>Limits — what you can’t (or shouldn’t) expect</h3>
+              <ul class="help-limits">
+                <li>
+                  <strong>No symbolic algebra.</strong> It will not simplify
+                  <code>(x+1)^2</code> to <code>x^2+2x+1</code>, expand polynomials, or
+                  rearrange equations for you.
+                </li>
+                <li>
+                  <strong>No equation solving.</strong> Entering
+                  <code>2x + 3 = 11</code> is not supported as a solve step. Assign
+                  values and evaluate expressions instead.
+                </li>
+                <li>
+                  <strong>No calculus CAS.</strong> No symbolic derivatives/integrals
+                  as first-class features. You can plot a function numerically, but
+                  not get a closed-form antiderivative.
+                </li>
+                <li>
+                  <strong>Numeric (IEEE) floating point.</strong> Results can show
+                  tiny float noise (e.g. <code>0.1 + 0.2</code>). Use the fraction
+                  format when a rational approximation helps.
+                </li>
+                <li>
+                  <strong>Factorial range.</strong> <code>factorial(n)</code> accepts
+                  integers <strong>0…170</strong> only (beyond that overflows normal
+                  floats).
+                </li>
+                <li>
+                  <strong>Graphing is a sample, not exact.</strong> Curves are built
+                  from hundreds of points. Vertical asymptotes appear as gaps; very
+                  sharp spikes can be missed between samples.
+                </li>
+                <li>
+                  <strong>Units must be recognized names.</strong> Prefer math.js-style
+                  units (<code>m</code>, <code>ft</code>, <code>km/h</code>,
+                  <code>degC</code>). Everyday aliases <code>mph</code> and
+                  <code>kph</code> are included; obscure spellings may fail.
+                </li>
+                <li>
+                  <strong>Not a financial or regulatory calculator.</strong> Fine for
+                  homework and engineering scratch work; not certified for tax,
+                  medical, or legal computations.
+                </li>
+                <li>
+                  <strong>Local data only.</strong> Clearing site data, another
+                  browser, or private mode wipes history/variables. There is no cloud
+                  sync or multi-device account.
+                </li>
+                <li>
+                  <strong>Matrix / complex UI is minimal.</strong> math.js can handle
+                  some advanced values if you type them, but there is no dedicated
+                  matrix editor or complex-plane view.
+                </li>
+              </ul>
+            </section>
+
+            <section id="help-ui" class="help-sec" data-help-panel="ui" hidden>
+              <h3>Using the interface</h3>
+              <ul>
+                <li>
+                  <strong>Expression box</strong> — type freely; live preview shows a
+                  soft result while you edit. <kbd>Enter</kbd> commits to history.
+                </li>
+                <li>
+                  <strong>History (left)</strong> — click a row’s expression to reload
+                  it; click the result line to insert that number. Clear removes the
+                  list only (not variables).
+                </li>
+                <li>
+                  <strong>Variables (left)</strong> — shows user assignments and
+                  defined functions. Clear drops both maps.
+                </li>
+                <li>
+                  <strong>Keypad tabs</strong> — Basic numbers/ops, Scientific
+                  functions, and More (hyperbolic, rounding, unit keywords).
+                </li>
+                <li>
+                  <strong>DEG / RAD</strong> — affects trig and inverse trig. Hyperbolic
+                  functions are always “plain” (not degree-based).
+                </li>
+                <li>
+                  <strong>Format &amp; digits</strong> — change how numbers are shown;
+                  the underlying value is unchanged.
+                </li>
+                <li>
+                  <strong>Graph</strong> — toggle the panel, set <code>f(x)</code> and
+                  x-range, press <strong>Plot</strong>. Free variable must be
+                  <code>x</code>.
+                </li>
+                <li>
+                  <strong>Theme</strong> — ◐ toggles light/dark chrome (saved locally).
+                </li>
+              </ul>
+            </section>
+
+            <section id="help-keys" class="help-sec" data-help-panel="keys" hidden>
+              <h3>Keyboard shortcuts</h3>
+              <table class="help-table">
+                <tr><td><kbd>Enter</kbd></td><td>Evaluate expression (adds to history)</td></tr>
+                <tr><td><kbd>Esc</kbd></td><td>Clear the expression box</td></tr>
+                <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Step through history from the expression box</td></tr>
+                <tr><td><kbd>Ctrl</kbd> + <kbd>L</kbd></td><td>Focus and select the expression</td></tr>
+                <tr><td><kbd>Ctrl</kbd> + <kbd>G</kbd></td><td>Show / hide the graph panel</td></tr>
+              </table>
+              <p class="help-note">
+                Number keys, operators, and most symbols work like a normal text field —
+                you do not need the on-screen keypad.
+              </p>
+            </section>
+
+            <section id="help-impl" class="help-sec" data-help-panel="impl" hidden>
+              <h3>How it’s implemented</h3>
+              <p>
+                This is a static web app: HTML, CSS, and JavaScript bundled with
+                <strong>Vite</strong>. There is no backend API for calculations.
+              </p>
+              <table class="help-table wide">
+                <thead>
+                  <tr><th>Piece</th><th>Role</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>math.js</strong></td>
+                    <td>Parses and evaluates expressions, units, and many numeric functions</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Custom engine layer</strong></td>
+                    <td>Normalizes friendly input (π, ×, √, implicit multiply), applies DEG/RAD to trig, factorial/nCr helpers, formatting, and plot sampling</td>
+                  </tr>
+                  <tr>
+                    <td><strong>KaTeX</strong></td>
+                    <td>Optional pretty rendering of the last committed expression</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Canvas plotter</strong></td>
+                    <td>Samples <code>y = f(x)</code> and draws grid, axes, and the curve locally</td>
+                  </tr>
+                  <tr>
+                    <td><strong>localStorage</strong></td>
+                    <td>Persists UI state and calculator memory on this origin only</td>
+                  </tr>
+                  <tr>
+                    <td><strong>GitHub Pages</strong></td>
+                    <td>Hosts the built static files; the CDN only serves files, it does not compute your math</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                Source and issues:
+                <a
+                  href="https://github.com/ryan-miles/open-source-math-calculator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >github.com/ryan-miles/open-source-math-calculator</a
+                >.
+                Offline: run <code>npm run build</code> and open the single-file
+                <code>dist/index.html</code>, or use the included
+                <code>.bat</code> launcher on Windows.
+              </p>
+            </section>
+          </div>
         </div>
-      </form>
+
+        <footer class="help-footer">
+          <button type="button" class="btn" id="help-close-footer">Close</button>
+        </footer>
+      </div>
     </dialog>
 
     <script type="module" src="/src/main.js"></script>

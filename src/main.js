@@ -759,7 +759,33 @@ function initEvents() {
   el.xMin.addEventListener("change", redrawPlot);
   el.xMax.addEventListener("change", redrawPlot);
 
-  $("help-btn").addEventListener("click", () => el.helpDialog.showModal());
+  function openGuide(section = "overview") {
+    showHelpSection(section);
+    el.helpDialog.showModal();
+  }
+
+  function showHelpSection(id) {
+    document.querySelectorAll(".help-nav-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.helpSec === id);
+    });
+    document.querySelectorAll("[data-help-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.helpPanel !== id;
+    });
+  }
+
+  $("help-btn").addEventListener("click", () => openGuide("overview"));
+  $("about-open-guide")?.addEventListener("click", () => openGuide("overview"));
+  $("help-close")?.addEventListener("click", () => el.helpDialog.close());
+  $("help-close-footer")?.addEventListener("click", () => el.helpDialog.close());
+
+  document.querySelectorAll(".help-nav-btn").forEach((btn) => {
+    btn.addEventListener("click", () => showHelpSection(btn.dataset.helpSec));
+  });
+
+  el.helpDialog.addEventListener("click", (e) => {
+    // Click backdrop (dialog itself) to close
+    if (e.target === el.helpDialog) el.helpDialog.close();
+  });
 
   // Examples
   EXAMPLES.forEach((ex, i) => {
