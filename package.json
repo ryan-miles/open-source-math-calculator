@@ -1,0 +1,22 @@
+{
+  "name": "open-source-math-calculator",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Advanced browser math calculator with expressions, history, units, and function graphing",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:web": "vite build --mode web",
+    "preview": "vite preview",
+    "start": "vite --open"
+  },
+  "dependencies": {
+    "katex": "^0.16.21",
+    "mathjs": "^14.4.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7",
+    "vite-plugin-singlefile": "^2.1.0"
+  }
+}

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-ui-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open-Source Math Calculator</title>
+    <meta
+      name="description"
+      content="Advanced browser math calculator — expressions, scientific functions, history, units, and graphing. Runs entirely offline; nothing is uploaded."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <meta property="og:title" content="Open-Source Math Calculator" />
+    <meta
+      property="og:description"
+      content="Advanced browser math calculator with expressions, units, variables, and function graphing."
+    />
+    <meta property="og:type" content="website" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>∑</text></svg>"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">∑</span>
+        <span class="brand-name">Open-Source Math Calculator</span>
+      </div>
+
+      <div class="topbar-group">
+        <div class="seg" role="group" aria-label="Angle mode">
+          <button type="button" class="seg-btn active" data-angle="DEG" id="angle-deg">DEG</button>
+          <button type="button" class="seg-btn" data-angle="RAD" id="angle-rad">RAD</button>
+        </div>
+
+        <label class="field">
+          <span>Format</span>
+          <select id="format-select">
+            <option value="auto">Auto</option>
+            <option value="fixed">Fixed</option>
+            <option value="sci">Scientific</option>
+            <option value="eng">Engineering</option>
+            <option value="frac">Fraction</option>
+          </select>
+        </label>
+
+        <label class="field" id="digits-field">
+          <span>Digits</span>
+          <input id="digits-input" type="number" min="2" max="16" step="1" value="12" />
+        </label>
+
+        <label class="field">
+          <span>Examples</span>
+          <select id="example-select">
+            <option value="">Load an example…</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="topbar-group right">
+        <button id="plot-toggle" class="btn ghost" title="Show / hide function graph">Graph</button>
+        <button id="help-btn" class="btn ghost" title="Keyboard shortcuts & tips">Help</button>
+        <button id="ui-theme-btn" class="btn ghost icon" title="Toggle light / dark interface">◐</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <!-- Left: history + variables -->
+      <aside class="pane side-pane" id="side-pane">
+        <div class="pane-head">
+          <h2>History</h2>
+          <div class="pane-head-actions">
+            <button id="clear-history" class="btn tiny ghost" title="Clear history">Clear</button>
+          </div>
+        </div>
+        <div class="history-list" id="history-list" role="list"></div>
+
+        <div class="vars-block">
+          <div class="pane-head compact">
+            <h2>Variables</h2>
+            <div class="pane-head-actions">
+              <button id="clear-vars" class="btn tiny ghost" title="Clear user variables">Clear</button>
+            </div>
+          </div>
+          <div class="vars-list" id="vars-list"></div>
+        </div>
+      </aside>
+
+      <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" tabindex="0"></div>
+
+      <!-- Center: display + keypad -->
+      <section class="pane calc-pane">
+        <div class="display">
+          <div class="display-meta">
+            <span id="status-chip" class="chip ok">Ready</span>
+            <span class="dim" id="live-preview"></span>
+          </div>
+          <div class="display-expr-wrap">
+            <textarea
+              id="expr"
+              rows="2"
+              spellcheck="false"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              placeholder="Type an expression… e.g. sin(30) + sqrt(2)^2"
+            ></textarea>
+          </div>
+          <div class="display-result" id="result" aria-live="polite">0</div>
+          <div class="display-katex" id="katex-preview" hidden></div>
+        </div>
+
+        <div class="keypad-tabs">
+          <button type="button" class="tab active" data-pad="num">Basic</button>
+          <button type="button" class="tab" data-pad="sci">Scientific</button>
+          <button type="button" class="tab" data-pad="more">More</button>
+        </div>
+
+        <div class="keypad" id="keypad"></div>
+
+        <div class="memory-bar">
+          <button type="button" class="btn tiny ghost" data-mem="MC" title="Memory clear">MC</button>
+          <button type="button" class="btn tiny ghost" data-mem="MR" title="Memory recall">MR</button>
+          <button type="button" class="btn tiny ghost" data-mem="M+" title="Memory add">M+</button>
+          <button type="button" class="btn tiny ghost" data-mem="M−" title="Memory subtract">M−</button>
+          <button type="button" class="btn tiny ghost" data-mem="MS" title="Memory store">MS</button>
+          <span class="mem-indicator" id="mem-indicator" hidden>M</span>
+          <span class="dim mem-value" id="mem-value"></span>
+        </div>
+      </section>
+
+      <!-- Right: graph panel -->
+      <aside class="pane graph-pane" id="graph-pane" hidden>
+        <div class="pane-head">
+          <h2>Graph</h2>
+          <div class="pane-head-actions">
+            <button id="plot-btn" class="btn tiny primary" title="Plot expression as y = f(x)">Plot</button>
+          </div>
+        </div>
+        <div class="graph-controls">
+          <label class="field grow">
+            <span>f(x)</span>
+            <input id="plot-expr" type="text" placeholder="sin(x)" spellcheck="false" />
+          </label>
+          <label class="field">
+            <span>x min</span>
+            <input id="x-min" type="number" value="-10" step="any" />
+          </label>
+          <label class="field">
+            <span>x max</span>
+            <input id="x-max" type="number" value="10" step="any" />
+          </label>
+        </div>
+        <div class="graph-canvas-wrap">
+          <canvas id="plot-canvas"></canvas>
+        </div>
+        <p class="graph-hint dim">
+          Plot uses free variable <code>x</code>. Define helpers first, e.g.
+          <code>f(x) = x^2</code> then plot <code>f(x)</code>.
+        </p>
+      </aside>
+    </main>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <dialog id="help-dialog" class="help-dialog">
+      <form method="dialog" class="help-inner">
+        <header>
+          <h2>Help & shortcuts</h2>
+          <button type="submit" class="btn ghost icon" aria-label="Close">✕</button>
+        </header>
+        <div class="help-body">
+          <section>
+            <h3>Keyboard</h3>
+            <table class="help-table">
+              <tr><td><kbd>Enter</kbd></td><td>Evaluate</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Evaluate (keep focus)</td></tr>
+              <tr><td><kbd>Esc</kbd></td><td>Clear expression</td></tr>
+              <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Browse history in the expression box</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Focus expression</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Toggle graph panel</td></tr>
+            </table>
+          </section>
+          <section>
+            <h3>Expressions</h3>
+            <ul>
+              <li>Natural math: <code>2π</code>, <code>3(4+5)</code>, <code>sqrt(2)^2</code></li>
+              <li>Assignments: <code>r = 5</code>, then <code>pi * r^2</code></li>
+              <li>Functions: <code>f(x) = x^2 + 1</code>, then <code>f(3)</code></li>
+              <li>Last answer: <code>ans</code> (or click a history row)</li>
+              <li>Units: <code>5 ft to m</code>, <code>72 degF to degC</code>, <code>100 km/h in mph</code></li>
+              <li>Combinatorics: <code>nCr(52, 5)</code>, <code>factorial(10)</code></li>
+            </ul>
+          </section>
+          <section>
+            <h3>Privacy</h3>
+            <p>
+              Everything runs in your browser. History and settings stay in
+              <code>localStorage</code> on this device — nothing is uploaded.
+            </p>
+          </section>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
