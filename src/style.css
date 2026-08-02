@@ -499,6 +499,16 @@ code {
   max-width: 70%;
 }
 
+.precision-warn {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--warn);
+  background: rgba(240, 180, 41, 0.12);
+  border: 1px solid rgba(240, 180, 41, 0.35);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
 .display-expr-wrap {
   position: relative;
 }

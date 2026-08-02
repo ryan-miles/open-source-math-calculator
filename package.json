@@ -9,7 +9,8 @@
     "build": "vite build",
     "build:web": "vite build --mode web",
     "preview": "vite preview",
-    "start": "vite --open"
+    "start": "vite --open",
+    "test": "node scripts/test-mod.mjs"
   },
   "dependencies": {
     "katex": "^0.16.21",

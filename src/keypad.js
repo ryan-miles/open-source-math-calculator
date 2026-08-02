@@ -101,9 +101,16 @@ export const KEYPAD = {
     [
       { label: "gcd", wrap: ["gcd(", ")"], cls: "fn" },
       { label: "lcm", wrap: ["lcm(", ")"], cls: "fn" },
+      { label: "invmod", wrap: ["invmod(", ")"], cls: "fn", title: "Modular inverse" },
+      { label: "modmul", wrap: ["modmul(", ")"], cls: "fn", title: "Exact (a*b) mod m" },
+      { label: "modpow", wrap: ["modpow(", ")"], cls: "fn", title: "Exact a^e mod m" },
+    ],
+    [
       { label: "sum", wrap: ["sum(", ")"], cls: "fn" },
+      { label: "xgcd", wrap: ["xgcd(", ")"], cls: "fn", title: "Extended gcd" },
       { label: "to", insert: " to ", cls: "op", title: "Unit convert: 5 ft to m" },
       { label: "in", insert: " in ", cls: "op", title: "Unit convert: 100 km/h in mph" },
+      { label: ",", insert: ", ", cls: "muted" },
     ],
   ],
 };
@@ -113,6 +120,9 @@ export const EXAMPLES = [
   { name: "Compound interest", expr: "P * (1 + r/n)^(n*t)", setup: "P=10000; r=0.05; n=12; t=10" },
   { name: "Law of cosines", expr: "sqrt(a^2 + b^2 - 2*a*b*cos(C))", setup: "a=5; b=7; C=60" },
   { name: "Combinations", expr: "nCr(52, 5)" },
+  { name: "Modular inverse", expr: "invmod(314159265, 1000000007)" },
+  { name: "Exact mod product", expr: "mod(314159265 * 575450284, 1000000007)" },
+  { name: "modpow large", expr: "mod(2^60, 1000000007)" },
   { name: "Unit convert", expr: "100 km/h to mph" },
   { name: "Temperature", expr: "72 degF to degC" },
   { name: "Define function", expr: "f(x) = x^2 * sin(x)" },

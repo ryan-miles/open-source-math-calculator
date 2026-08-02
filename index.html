@@ -33,6 +33,16 @@
           <button type="button" class="seg-btn" data-angle="RAD" id="angle-rad">RAD</button>
         </div>
 
+        <label class="field" title="How numbers are computed. Auto keeps modular arithmetic exact (BigInt).">
+          <span>Precision</span>
+          <select id="number-mode-select">
+            <option value="auto" selected>Auto (exact mod)</option>
+            <option value="number">Float (fast)</option>
+            <option value="BigNumber">BigNumber</option>
+            <option value="Fraction">Fraction</option>
+          </select>
+        </label>
+
         <label class="field">
           <span>Format</span>
           <select id="format-select">
@@ -97,6 +107,7 @@
             <span id="status-chip" class="chip ok">Ready</span>
             <span class="dim" id="live-preview"></span>
           </div>
+          <div class="precision-warn" id="precision-warn" hidden role="status"></div>
           <div class="display-expr-wrap">
             <textarea
               id="expr"
@@ -307,6 +318,9 @@
                   <tr><td>Chain with ans</td><td>Evaluate something, then <code>ans * 2</code></td></tr>
                   <tr><td>Percent</td><td><code>50%</code> → 0.5; useful in <code>200 * 15%</code></td></tr>
                   <tr><td>Combinations</td><td><code>nCr(52, 5)</code>, <code>factorial(10)</code></td></tr>
+                  <tr><td>Modular inverse</td><td><code>invmod(314159265, 1000000007)</code> → <code>575450284</code></td></tr>
+                  <tr><td>Exact mod product</td><td><code>mod(314159265 * 575450284, 1000000007)</code> → <code>1</code> (Auto rewrites to <code>modmul</code>)</td></tr>
+                  <tr><td>Safe helpers</td><td><code>modmul(a, b, m)</code>, <code>modpow(a, e, m)</code>, <code>gcd</code>, <code>lcm</code>, <code>xgcd</code></td></tr>
                   <tr><td>Length units</td><td><code>5 ft to m</code>, <code>1 mile to km</code></td></tr>
                   <tr><td>Temperature</td><td><code>72 degF to degC</code> (use <code>degC</code> / <code>degF</code>)</td></tr>
                   <tr><td>Speed</td><td><code>100 km/h to mph</code> (<code>mph</code>, <code>kph</code> aliases included)</td></tr>
@@ -338,14 +352,23 @@
                   not get a closed-form antiderivative.
                 </li>
                 <li>
-                  <strong>Numeric (IEEE) floating point.</strong> Results can show
-                  tiny float noise (e.g. <code>0.1 + 0.2</code>). Use the fraction
-                  format when a rational approximation helps.
+                  <strong>IEEE-754 float limit (2⁵³).</strong> Ordinary JavaScript numbers
+                  are exact only up to <code>Number.MAX_SAFE_INTEGER</code>
+                  (9 007 199 254 740 991). Products used in modular arithmetic that
+                  exceed this used to lose low bits. With <strong>Precision: Auto</strong>
+                  (default), <code>mod(a*b, m)</code> is rewritten to exact
+                  <code>modmul</code> (BigInt). Explicit <strong>Float</strong> mode can
+                  still lose precision — a warning appears when that risk is detected.
                 </li>
                 <li>
-                  <strong>Factorial range.</strong> <code>factorial(n)</code> accepts
-                  integers <strong>0…170</strong> only (beyond that overflows normal
-                  floats).
+                  <strong>Float noise.</strong> Everyday scientific results can show
+                  tiny float noise (e.g. <code>0.1 + 0.2</code>). Use Fraction precision
+                  or the fraction display format when rationals help.
+                </li>
+                <li>
+                  <strong>Factorial range.</strong> In Float mode, <code>factorial(n)</code>
+                  is limited to integers <strong>0…170</strong>. Auto/BigNumber can go
+                  higher (capped for safety).
                 </li>
                 <li>
                   <strong>Graphing is a sample, not exact.</strong> Curves are built
@@ -401,8 +424,16 @@
                   functions are always “plain” (not degree-based).
                 </li>
                 <li>
+                  <strong>Precision</strong> —
+                  <em>Auto</em> (default) keeps modular ops exact via BigInt helpers;
+                  <em>Float</em> is classic IEEE doubles (fast, but unsafe for large integer products);
+                  <em>BigNumber</em> uses math.js arbitrary-precision decimals;
+                  <em>Fraction</em> uses rational arithmetic where possible.
+                </li>
+                <li>
                   <strong>Format &amp; digits</strong> — change how numbers are shown;
-                  the underlying value is unchanged.
+                  the underlying value is unchanged. Large integers always print as full
+                  decimal strings (not scientific notation) in Auto.
                 </li>
                 <li>
                   <strong>Graph</strong> — toggle the panel, set <code>f(x)</code> and

@@ -7,6 +7,7 @@ import {
   formatResult,
   normalizeInput,
   sampleFunction,
+  toStorable,
   math,
 } from "./engine.js";
 import { createPlotter } from "./plotter.js";
@@ -21,11 +22,13 @@ const el = {
   live: $("live-preview"),
   katex: $("katex-preview"),
   status: $("status-chip"),
+  precisionWarn: $("precision-warn"),
   history: $("history-list"),
   vars: $("vars-list"),
   keypad: $("keypad"),
   format: $("format-select"),
   digits: $("digits-input"),
+  numberMode: $("number-mode-select"),
   example: $("example-select"),
   toast: $("toast"),
   memInd: $("mem-indicator"),
@@ -40,14 +43,15 @@ const el = {
   helpDialog: $("help-dialog"),
 };
 
-const STORE_KEY = "open-source-math-calculator:v1";
+const STORE_KEY = "open-source-math-calculator:v2";
 const MAX_HISTORY = 80;
 
 const state = {
   angleMode: "DEG",
+  numberMode: "auto",
   pad: "num",
   history: [],
-  variables: {}, // plain numbers / serializable
+  variables: {}, // plain numbers / serializable digit strings
   functions: {}, // { name: { params, body } }
   memory: null,
   ans: 0,
@@ -69,6 +73,7 @@ function saveState() {
       JSON.stringify({
         expr: el.expr.value,
         angleMode: state.angleMode,
+        numberMode: state.numberMode,
         format: el.format.value,
         digits: el.digits.value,
         uiTheme: document.documentElement.dataset.uiTheme,
@@ -76,7 +81,7 @@ function saveState() {
         variables: state.variables,
         functions: state.functions,
         memory: state.memory,
-        ans: state.ans,
+        ans: typeof state.ans === "bigint" ? state.ans.toString() : state.ans,
         graphOpen: state.graphOpen,
         plotExpr: el.plotExpr.value,
         xMin: el.xMin.value,
@@ -92,21 +97,40 @@ function saveState() {
 function loadState() {
   let saved = {};
   try {
-    saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+    saved = JSON.parse(
+      localStorage.getItem(STORE_KEY) ||
+        localStorage.getItem("open-source-math-calculator:v1") ||
+        "{}"
+    );
   } catch {
     saved = {};
   }
 
   if (saved.expr != null) el.expr.value = saved.expr;
   if (saved.angleMode) state.angleMode = saved.angleMode;
+  if (saved.numberMode) state.numberMode = saved.numberMode;
+  if (el.numberMode) el.numberMode.value = state.numberMode;
   if (saved.format) el.format.value = saved.format;
   if (saved.digits) el.digits.value = saved.digits;
   if (saved.uiTheme) document.documentElement.dataset.uiTheme = saved.uiTheme;
   if (Array.isArray(saved.history)) state.history = saved.history;
   if (saved.variables && typeof saved.variables === "object") state.variables = saved.variables;
   if (saved.functions && typeof saved.functions === "object") state.functions = saved.functions;
-  if (saved.memory != null && Number.isFinite(saved.memory)) state.memory = saved.memory;
+  if (saved.memory != null && (typeof saved.memory === "number" || typeof saved.memory === "string")) {
+    state.memory = saved.memory;
+  }
   if (typeof saved.ans === "number") state.ans = saved.ans;
+  else if (typeof saved.ans === "string" && /^-?\d+$/.test(saved.ans)) {
+    try {
+      const bi = BigInt(saved.ans);
+      state.ans =
+        bi <= BigInt(Number.MAX_SAFE_INTEGER) && bi >= BigInt(Number.MIN_SAFE_INTEGER)
+          ? Number(bi)
+          : bi;
+    } catch {
+      /* keep default */
+    }
+  }
   if (saved.graphOpen) state.graphOpen = true;
   if (saved.plotExpr) el.plotExpr.value = saved.plotExpr;
   if (saved.xMin != null) el.xMin.value = saved.xMin;
@@ -143,6 +167,55 @@ function scopeVars() {
   return { ...state.variables, ans: state.ans };
 }
 
+function currentNumberMode() {
+  return state.numberMode || el.numberMode?.value || "auto";
+}
+
+function setPrecisionWarn(msg) {
+  if (!el.precisionWarn) return;
+  if (!msg) {
+    el.precisionWarn.hidden = true;
+    el.precisionWarn.textContent = "";
+    return;
+  }
+  el.precisionWarn.hidden = false;
+  el.precisionWarn.textContent = msg;
+}
+
+function rememberAns(value) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    state.ans = value;
+    return;
+  }
+  if (typeof value === "bigint") {
+    state.ans = value;
+    return;
+  }
+  if (value && typeof value === "object" && value.isBigNumber && value.isInteger()) {
+    try {
+      const bi = BigInt(value.toFixed(0));
+      state.ans =
+        bi <= BigInt(Number.MAX_SAFE_INTEGER) && bi >= BigInt(Number.MIN_SAFE_INTEGER)
+          ? Number(bi)
+          : bi;
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+  if (value && typeof value === "object" && value.isUnit) {
+    try {
+      state.ans = value.toNumber();
+    } catch {
+      /* unit without numeric base */
+    }
+  }
+}
+
+function evalExpr(expr) {
+  return evaluate(expr, state.angleMode, scopeVars(), state.functions, currentNumberMode());
+}
+
 /* ------------------------------------------------------------------ *
  * Evaluate
  * ------------------------------------------------------------------ */
@@ -156,6 +229,7 @@ function runEvaluate({ silent = false } = {}) {
     el.result.classList.remove("error");
     setStatus("ok", "Ready");
     el.live.textContent = "";
+    setPrecisionWarn(null);
     return null;
   }
 
@@ -163,13 +237,15 @@ function runEvaluate({ silent = false } = {}) {
     let displayExpr = normalizeInput(raw);
     let value;
     let note = "";
+    let meta = null;
 
     if (stmt.kind === "assign") {
-      value = evaluate(stmt.expr, state.angleMode, scopeVars(), state.functions);
-      // Only store serializable scalars in variables map for persistence
+      const out = evalExpr(stmt.expr);
+      value = out.value;
+      meta = out.meta;
       const n = toStorable(value);
       if (n !== undefined) state.variables[stmt.name] = n;
-      else state.variables[stmt.name] = Number(value);
+      else if (typeof value === "number") state.variables[stmt.name] = value;
       note = ` → ${stmt.name}`;
       displayExpr = `${stmt.name} = ${stmt.expr}`;
     } else if (stmt.kind === "fn") {
@@ -178,23 +254,17 @@ function runEvaluate({ silent = false } = {}) {
       note = " defined";
       displayExpr = `${stmt.name}(${stmt.params.join(", ")}) = ${stmt.body}`;
     } else {
-      value = evaluate(stmt.expr, state.angleMode, scopeVars(), state.functions);
+      const out = evalExpr(stmt.expr);
+      value = out.value;
+      meta = out.meta;
     }
 
     const formatted = formatResult(value, formatOpts());
     el.result.textContent = formatted;
     el.result.classList.remove("error");
-    setStatus("ok", stmt.kind === "fn" ? "Defined" : "OK");
-
-    if (typeof value === "number" && Number.isFinite(value)) {
-      state.ans = value;
-    } else if (value && typeof value === "object" && value.isUnit) {
-      try {
-        state.ans = value.toNumber();
-      } catch {
-        /* unit without numeric base */
-      }
-    }
+    setStatus("ok", stmt.kind === "fn" ? "Defined" : meta?.rewrote ? "Exact mod" : "OK");
+    setPrecisionWarn(meta?.precisionWarning || null);
+    rememberAns(value);
 
     if (!silent) {
       pushHistory({
@@ -217,6 +287,7 @@ function runEvaluate({ silent = false } = {}) {
     el.result.classList.add("error");
     setStatus("err", "Error");
     el.live.textContent = "";
+    setPrecisionWarn(null);
     if (!silent) {
       pushHistory({ expr: normalizeInput(raw) || raw, result: msg, ok: false, raw });
       renderHistory();
@@ -234,6 +305,7 @@ function livePreview() {
     el.result.classList.remove("error");
     setStatus("ok", "Ready");
     el.katex.hidden = true;
+    setPrecisionWarn(null);
     return;
   }
 
@@ -245,28 +317,25 @@ function livePreview() {
       el.live.textContent = `define ${stmt.name}(${stmt.params.join(", ")})`;
       setStatus("ok", "Function");
       el.result.classList.remove("error");
+      setPrecisionWarn(null);
       return;
     }
     const expr = stmt.kind === "assign" ? stmt.expr : stmt.expr;
-    const value = evaluate(expr, state.angleMode, scopeVars(), state.functions);
+    const { value, meta } = evalExpr(expr);
     const formatted = formatResult(value, formatOpts());
     el.live.textContent =
       stmt.kind === "assign" ? `${stmt.name} ← ${formatted}` : `= ${formatted}`;
-    setStatus("ok", "Live");
-    // Soft-update result while typing only if not a definition
+    setStatus("ok", meta?.rewrote ? "Exact mod" : "Live");
+    setPrecisionWarn(meta?.precisionWarning || null);
     if (stmt.kind === "eval") {
       el.result.textContent = formatted;
       el.result.classList.remove("error");
     }
-  } catch (err) {
+  } catch {
     el.live.textContent = "";
     setStatus("warn", "…");
+    setPrecisionWarn(null);
   }
-}
-
-function toStorable(value) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  return undefined;
 }
 
 function cleanError(err) {
@@ -703,6 +772,12 @@ function initEvents() {
     renderHistory();
     renderVars();
     renderMemory();
+    saveState();
+  });
+
+  el.numberMode?.addEventListener("change", () => {
+    state.numberMode = el.numberMode.value;
+    livePreview();
     saveState();
   });
 

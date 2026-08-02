@@ -56,6 +56,8 @@ as you type. History, variables, memory and settings are saved in the browser.
 | **Trig (DEG/RAD)** | `sin(30)`, `cos(pi/4)`, `atan2(1, 1)` |
 | **Logs & exp** | `ln(e)`, `log(100)`, `log2(8)`, `exp(1)` |
 | **Combinatorics** | `factorial(10)`, `nCr(52, 5)`, `nPr(10, 3)` |
+| **Modular (exact)** | `invmod(a, m)`, `mod(a*b, m)` → 1 even past 2⁵³, `modmul`, `modpow` |
+| **Precision** | Auto (exact mod) / Float / BigNumber / Fraction |
 | **Variables** | `r = 5` then `pi * r^2` |
 | **Functions** | `f(x) = x^2 * sin(x)` then `f(pi/2)` |
 | **Last answer** | `ans * 2` |
@@ -100,7 +102,18 @@ vite.config.js      dual build (offline single-file + web)
 
 ## Limits
 
-- Factorial is defined for integers 0…170 (IEEE float range).
+- **IEEE-754 / 2⁵³:** plain JavaScript numbers lose integer precision past
+  `Number.MAX_SAFE_INTEGER`. With **Precision: Auto** (default), modular ops
+  use BigInt and `mod(a*b, m)` is rewritten to exact `modmul`, so cases like
+  `mod(314159265 * 575450284, 1000000007) → 1` are correct. Explicit **Float**
+  mode can still lose bits (a warning is shown when that pattern is detected).
+- Factorial in Float mode is limited to integers 0…170; Auto/BigNumber allow larger n.
 - Graphing samples a finite number of points; vertical asymptotes show as gaps.
 - Unit conversion uses math.js’s unit system; unusual unit spellings may need
   the canonical form (e.g. `degC`, `degF`, `km/h`).
+
+## Tests
+
+```
+npm test   # modular arithmetic regressions (invmod / mod product / modpow)
+```
